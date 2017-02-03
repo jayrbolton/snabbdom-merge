@@ -1,7 +1,7 @@
 {
-  "name": "snabbdom-transform",
+  "name": "snabbdom-compose-transforms",
   "version": "0.0.1",
-  "description": "Snabbdom module for applying composable transforms to vnodes",
+  "description": "Snabbdom helper for applying composable transforms to vnodes",
   "main": "index.js",
   "scripts": {
     "test": "tape test/index.js | tap-spec"
@@ -12,8 +12,8 @@
   },
   "keywords": [
     "snabbdom",
-    "module",
-    "transform"
+    "transform",
+    "compose"
   ],
   "author": "jay r bolton <jayrbolton@gmail.com> (http://jayrbolton.com/)",
   "license": "MIT",

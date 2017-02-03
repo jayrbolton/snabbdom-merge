@@ -40,7 +40,7 @@ function mergeObj(fromObj, toObj) {
   return toObj
 }
 
-// Given an array of transform objects
+// Given an array of transform objects, return a function that will apply the composition of all the transforms to a vnode
 function compose(transforms) {
   return function(vnode) {
     var data = vnode.data

@@ -39,6 +39,8 @@ var mergeData = curryN(3, function(trans, data, key) {
 
 // Shallow merge fromObj into toObj
 function mergeObj(fromObj, toObj) {
+  fromObj = fromObj || {}
+  toObj = toObj || {}
   for(var key in fromObj) toObj[key] = fromObj[key]
   return toObj
 }

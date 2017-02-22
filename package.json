@@ -1,6 +1,6 @@
 {
   "name": "snabbdom-transform",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Snabbdom helper for applying composable transforms to vnodes",
   "main": "index.js",
   "scripts": {

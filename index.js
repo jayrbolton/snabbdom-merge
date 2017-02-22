@@ -1,3 +1,6 @@
+var curryN = require('ramda/src/curryN')
+var map = require('ramda/src/map')
+
 // Append or prepend child nodes
 function concatChildren(trans, vnode) {
   if(trans.appendChildren && trans.appendChildren.length) {
@@ -9,7 +12,7 @@ function concatChildren(trans, vnode) {
 }
 
 // Compose multiple event handlers or hook functions together 
-function composeFuncs(key, trans, data) {
+var composeFuncs = curryN(3, function(trans, data, key) {
   if(!trans[key] || !(typeof trans[key] === 'object')) return
   if(!data[key]) data[key] = {}
   for(var subkey in trans[key]) {
@@ -26,13 +29,13 @@ function composeFuncs(key, trans, data) {
       }
     }
   }
-}
+})
 
 // Merge class, attrs, props etc
-function mergeData(key, trans, data) {
+var mergeData = curryN(3, function(trans, data, key) {
   if(!trans[key] || !(typeof trans[key] === 'object')) return
   data[key] = mergeObj(trans[key], data[key])
-}
+})
 
 // Shallow merge fromObj into toObj
 function mergeObj(fromObj, toObj) {
@@ -41,27 +44,16 @@ function mergeObj(fromObj, toObj) {
 }
 
 // Given an array of transform objects, return a function that will apply the composition of all the transforms to a vnode
-function compose(transforms) {
-  return function(vnode) {
-    var data = vnode.data
-    var wrapper = vnode
-    if(!transforms || !transforms.length) return vnode
+var apply = curryN(2, function(transform, vnode) {
+  var data = vnode.data
 
-    for(var i = 0; i < transforms.length; ++i) {
-      var trans = transforms[i]
-      mergeData('props',  trans, data)
-      mergeData('class', trans, data)
-      mergeData('style', trans, data)
-      mergeData('attrs',  trans, data)
-      mergeData('dataset',  trans, data)
-      composeFuncs('on', trans, data)
-      composeFuncs('hook', trans, data)
-      concatChildren(trans, vnode)
-      if(trans.wrapper) wrapper = trans.wrapper(wrapper)
-    }
+  var toMerge = ['props', 'class', 'style', 'attrs', 'dataset']
+  map(mergeData(transform, data), toMerge)
+  var toCompose = ['on', 'hook']
+  map(composeFuncs(transform, data), toCompose)
+  concatChildren(transform, vnode)
 
-    return wrapper
-  }
-}
+  return vnode
+})
 
-module.exports = compose
+module.exports = apply

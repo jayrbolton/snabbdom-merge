@@ -23,7 +23,7 @@ _Setup_
 ```js
 // You can wrap the transform object in a function to 'configure' it
 
-const wordCount = (limit, total$) => ({
+const wordCountTransform = (limit, total$) => ({
   // If the vnode already has other event listeners functions,
   // then the transformer will compose them together so none are overwritten
 , on: {
@@ -43,11 +43,15 @@ _Usage_
 ```js
 const applyTransform = require('snabbdom-transform')
 const R = require('ramda')
+
   
 function view(state) {
- const textarea = h('textarea', {props: {name: 'something'}})
- const superTextarea = wordCount(validate(autoExpand(textarea)))
+ const countWords(50, state.total$)
+ const textarea = countWords(textarea)
 
- return h('div', [ superTextarea ])
+ return h('div', [ 
+   textarea
+ , h('p', 'total words: ' + state.total$())
+ ])
 }
 ```

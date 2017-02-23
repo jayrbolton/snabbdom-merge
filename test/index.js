@@ -11,11 +11,11 @@ test('it merges props', function(t) {
   t.end()
 })
 
-test('it merges selectors', function(t) {
+test('it favors vnode2 selector', function(t) {
   var vnode1 = h('span.x.y')
   var vnode2 = h('span.z')
   var merged = merge(vnode1, vnode2)
-  t.strictEqual(merged.sel, 'span.x.y.z')
+  t.strictEqual(merged.sel, 'span.z')
   var vnode3 = h('span')
   var vnode4 = h('span.x')
   var merged2 = merge(vnode3, vnode4)

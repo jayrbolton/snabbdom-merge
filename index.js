@@ -39,9 +39,7 @@ var merge = curryN(2, function(vnode1, vnode2) {
   var data = compose(mergeObj(vnode1.data), mergeObj(vnode2.data))(chained)
 
   var children = concat(vnode1.children || [], vnode2.children || [])
-  var sel = concat(vnode1.sel, vnode2.sel.replace(/^[a-zA-z]+(.|#)/, '$1'))
-
-  return h(sel, data, children)
+  return h(vnode2.sel, data, children)
 })
 
 module.exports = merge

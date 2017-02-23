@@ -10,7 +10,8 @@ var mergeWith = require('ramda/src/mergeWith')
 
 // Chain multiple event handlers or hook functions together 
 var chainFuncs = curryN(4, function(data1, data2, result, key) {
-  if(!data1[key] && !data2[key]) return result
+  data1[key] = data1[key] || {}
+  data2[key] = data2[key] || {}
   var chainHandlers = function(fn1, fn2) {
     return function() {
       fn1.apply(null, arguments)
@@ -35,9 +36,7 @@ var merge = curryN(2, function(vnode1, vnode2) {
   var merged = reduce(mergeKey(vnode1.data, vnode2.data), {}, toMerge)
   var toChain = ['on', 'hook']
   var chained = reduce(chainFuncs(vnode1.data, vnode2.data), merged, toChain)
-
   var data = compose(mergeObj(vnode1.data), mergeObj(vnode2.data))(chained)
-
   var children = concat(vnode1.children || [], vnode2.children || [])
   return h(vnode2.sel, data, children)
 })

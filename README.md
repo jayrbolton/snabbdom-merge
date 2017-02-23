@@ -1,57 +1,35 @@
-# snabbdom-transform
+# snabbdom-merge
 
-This is a system for transforming [Snabbdom](https://github.com/snabbdom/snabbdom) VNodes. You can create declarative "transformations" that each modify and extend a VNode, with the ability to compose many transformations together and apply them to the same VNode, without any of them conflicting with any others.
+This is a function to merge two snabbdom vnodes, `vnode1` and `vnode2`, with the following behavior:
+* Do a standard object merge on the 'props', 'class', 'style', 'attrs', and 'dataset', with the data in vnode2 getting precedence
+* Chain event listener and hook functions together, with the function from vnode1 getting called first, then the function in vnode 2
+  * Eg if vnode1 is h('a', {on: {click: fn1}}) and vnode2 is h('a', {on: {click: fn2}}), then the merged vnode will call fn1, then fn2
+* Concat together selector strings, preserving classnames.
+  * Eg if vnode1 is h('div.x') and vnode2 is h('div.y.z') then the merged vnode will be h('div.x.y.z')
+* Concatenate the children of vnode1 with the children of vnode2
 
-Example use case: say you have a few UI modules for `textarea` elements, such as validating the value, displaying how many words you have typed, and dynamically resizing the box as you type. How do you keep each of these modules separate but allow people to apply all three modules to a single textarea node, without any changes overriding any others? This module allows you to do that.
+## merge(vnode1, vnode2)
 
-A *transform object* for a vnode can do the following:
+This function returns a brand new, merged vnode with the above behavior. vnode1 and vnode2 should have the same tag names.
 
-* append or prepend children
-* compose hook and event functions
-* merge props, attrs, style, and class data
-
-*Transform objects* can have these properties:
-
-* `class`, `style`, `attrs`, and `dataset`: these will merge with existing VNode data; properties from the transform will override existing properties with the same name
-* `on` and `hook`: these functions will be composed with existing on/hook functions without overriding any of existing functions
-* `appendChildren` and `prependChildren`: child nodes to append and prepend
-
-## Example
-
-_Setup_
+_Example_
 
 ```js
-// You can wrap the transform object in a function to 'configure' it
+var h = require('snabbdom/h').default
+var merge = require('snabbdom-merge')
 
-const wordCountTransform = (limit, total$) => ({
-  // If the vnode already has other event listeners functions,
-  // then the transformer will compose them together so none are overwritten
-, on: {
-    keyup: ev => { total$(ev.currentTarget.value.split(' ').length }
-  }
-  // Any classes added here will merge with any other classes already on the vnode
-, class: {
-    invalid: total$() > limit
-  }
-, appendChildren: [x, y, z] // These elements will append to any existing children nodes
-, prependChildren: [x, y, z] // These elements will prepend to existing children nodes
-})
-```
+var sayhi = function(ev) { console.log('hi', ev) }
+var saybye = function(ev) { console.log('bye', ev) }
 
-_Usage_
+var vnode1 = h('button.x', {attrs: {'data-x': 'x'}, on: {click: sayhi})
+var vnode2 = h('button.y', {attrs: {'data-y': 'y'}, on: {click: saybye})
 
-```js
-const applyTransform = require('snabbdom-transform')
-const R = require('ramda')
+var merged = merge(vnode1, vnode2)
 
-  
-function view(state) {
- const countWords(50, state.total$)
- const textarea = countWords(textarea)
-
- return h('div', [ 
-   textarea
- , h('p', 'total words: ' + state.total$())
- ])
-}
+// Result:
+// 
+// h('div.x.y', {
+//   attrs: {'data-x': 'x', 'data-y': 'y'}
+// , on: {click: function(ev) { sayhi(ev); saybye(ev) }}
+// }, [h('span', 'x'), h('span', 'y')])
 ```

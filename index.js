@@ -1,61 +1,47 @@
+var h = require('snabbdom/h').default
 var curryN = require('ramda/src/curryN')
 var map = require('ramda/src/map')
+var mergeObj = require('ramda/src/merge')
+var assoc = require('ramda/src/assoc')
+var reduce = require('ramda/src/reduce')
+var compose = require('ramda/src/compose')
+var concat = require('ramda/src/concat')
+var mergeWith = require('ramda/src/mergeWith')
 
-// Append or prepend child nodes
-function concatChildren(trans, vnode) {
-  if(trans.appendChildren && trans.appendChildren.length) {
-    vnode.children = (vnode.children || []).concat(trans.appendChildren)
-  }
-  if(trans.prependChildren && trans.prependChildren.length) {
-    vnode.children = trans.prependChildren.concat(vnode.children || [])
-  }
-}
-
-// Compose multiple event handlers or hook functions together 
-var composeFuncs = curryN(3, function(trans, data, key) {
-  if(!trans[key] || !(typeof trans[key] === 'object')) return
-  if(!data[key]) data[key] = {}
-  for(var subkey in trans[key]) {
-    var func = trans[key][subkey]
-    var prevFunc = data[key][subkey]
-    if(typeof func === 'function') {
-      if(typeof prevFunc === 'function') {
-        data[key][subkey] = function() {
-          func.apply(null, arguments)
-          prevFunc.apply(null, arguments)
-        }
-      } else {
-        data[key][subkey] = func
-      }
+// Chain multiple event handlers or hook functions together 
+var chainFuncs = curryN(4, function(data1, data2, result, key) {
+  if(!data1[key] && !data2[key]) return result
+  var chainHandlers = function(fn1, fn2) {
+    return function() {
+      fn1.apply(null, arguments)
+      fn2.apply(null, arguments)
     }
   }
+  var chained = mergeWith(chainHandlers, data1[key], data2[key])
+  return assoc(key, chained, result)
 })
 
-// Merge class, attrs, props etc
-var mergeData = curryN(3, function(trans, data, key) {
-  if(!trans[key] || !(typeof trans[key] === 'object')) return
-  data[key] = mergeObj(trans[key], data[key])
+// Merge the nested objects referenced by 'key' into 'result'
+var mergeKey = curryN(4, function(data1, data2, result, key) {
+  var merged = mergeObj(data1[key], data2[key])
+  return assoc(key, merged, result)
 })
 
-// Shallow merge fromObj into toObj
-function mergeObj(fromObj, toObj) {
-  fromObj = fromObj || {}
-  toObj = toObj || {}
-  for(var key in fromObj) toObj[key] = fromObj[key]
-  return toObj
-}
-
-// Given an array of transform objects, return a function that will apply the composition of all the transforms to a vnode
-var apply = curryN(2, function(transform, vnode) {
-  var data = vnode.data
-
+// Merge some data properties, favoring vnode2
+// Chain all hook and eventlistener functions together
+// Concat selectors together
+var merge = curryN(2, function(vnode1, vnode2) {
   var toMerge = ['props', 'class', 'style', 'attrs', 'dataset']
-  map(mergeData(transform, data), toMerge)
-  var toCompose = ['on', 'hook']
-  map(composeFuncs(transform, data), toCompose)
-  concatChildren(transform, vnode)
+  var merged = reduce(mergeKey(vnode1.data, vnode2.data), {}, toMerge)
+  var toChain = ['on', 'hook']
+  var chained = reduce(chainFuncs(vnode1.data, vnode2.data), merged, toChain)
 
-  return vnode
+  var data = compose(mergeObj(vnode1.data), mergeObj(vnode2.data))(chained)
+
+  var children = concat(vnode1.children || [], vnode2.children || [])
+  var sel = concat(vnode1.sel, vnode2.sel.replace(/^[a-zA-z]+(.|#)/, '$1'))
+
+  return h(sel, data, children)
 })
 
-module.exports = apply
+module.exports = merge

@@ -21,14 +21,22 @@ var merge = require('snabbdom-merge')
 var sayhi = function(ev) { console.log('hi', ev) }
 var saybye = function(ev) { console.log('bye', ev) }
 
-var vnode1 = h('button.x', {attrs: {'data-x': 'x'}, on: {click: sayhi})
-var vnode2 = h('button.y', {attrs: {'data-y': 'y'}, on: {click: saybye})
+var vnode1 = h('button.x', {
+  attrs: { 'data-x': 'x' },
+  on: { click: sayhi }
+}, h('span', 'x'))
+
+var vnode2 = h('button.y', {
+  attrs: { 'data-y': 'y' },
+  on: { click: saybye }
+}, h('span', 'y'))
+
 
 var merged = merge(vnode1, vnode2)
 
 // Result:
 // 
-// h('button.x.y', {
+// h('button.y', {
 //   attrs: {'data-x': 'x', 'data-y': 'y'}
 // , on: {click: function(ev) { sayhi(ev); saybye(ev) }}
 // }, [h('span', 'x'), h('span', 'y')])

@@ -36,7 +36,7 @@ var merged = merge(vnode1, vnode2)
 
 // Result:
 // 
-// h('button.y', {
+// h('button.x.y', {
 //   attrs: {'data-x': 'x', 'data-y': 'y'}
 // , on: {click: function(ev) { sayhi(ev); saybye(ev) }}
 // }, [h('span', 'x'), h('span', 'y')])
